@@ -32,3 +32,38 @@ class SalesAnalyzer:
         print(self.df.head(10))
         print(f"\nBasic statistics: ")
         print(self.df.describe())
+        
+    def clean_data(self):
+        """Clean the dataset by handeling missing values, duplicates, and invalid data"""
+        print("\n" * "=" * 50)
+        print("Data cleaning")
+        print("=" * 50)
+        
+        # Check for missing values
+        missing_values = self.df.isnull().sum()
+        print(f"\nMissing values per column: ")
+        print(missing_values[missing_values > 0])
+        
+        # Remove duplicates
+        duplicates_befor = self.df.duplicated().sum()
+        self.df = self.df.drop_duplicates()
+        print(f"\nDuplicates removed: {duplicates_befor}")
+        
+        # Handle missing values - fill numeric with median, categorical with mode
+        for col in self.df.columns:
+            if self.df[col].isnull().sum() > 0:
+                if self.df[col].dtype in ['Float64', 'int64']:
+                    self.df[col].fillna(self.df[col].median(), inplace=True)
+                else:
+                    self.df[col].fillna(self.df[col].mode()[0], inplace=True)
+                    
+        # Remove rows with negative or zero sales/quantities (if these columns exist)
+        numeric_cols = self.df.select_dtypes(include=[np.number]).columns
+        for col in numeric_cols:
+            if 'quantity' in col.lower() or 'sales' in col.lower() or 'price' in col.lower():
+                self.df = self.df[self.df[col] > 0]
+                
+            rows_after_cleaning = len(self.df)
+            print(f"\nrows after cleaning: {rows_after_cleaning}")
+            print(f"\nRows removed: {self.original_rows - rows_after_cleaning}")
+            
