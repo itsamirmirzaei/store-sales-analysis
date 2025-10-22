@@ -67,7 +67,7 @@ class SalesAnalyzer:
             print(f"\nrows after cleaning: {rows_after_cleaning}")
             print(f"\nRows removed: {self.original_rows - rows_after_cleaning}")
     
-    def add_drived_columns(self):
+    def add_derived_columns(self):
         """Add new columns with calculated metrics
         Assumes columns exist: Sales, Cost, Profit (or similar)
         """
@@ -106,4 +106,46 @@ class SalesAnalyzer:
                 print("Could not parse date column")
         
         print(f"\nNew columns added. Total column now: {len(self.df.columns)}")
+        
+    def analyze_top_products(self, top_n=10):
+        """
+        Identify and analyze top-selling products
+        
+        Args:
+            top_n (int): Number of top products to display
+        """
+        print("\n" + "=" * 50)
+        print(f"Top {top_n} Best Selling Products")
+        print("=" * 50)
+        
+        # Find product and sales columns
+        product_col = next((col for col in self.df.columns if 'product' in col.lower() or 'item' in col.lower()), None)
+        sales_col = next((col for col in self.df.columns if 'sales' in col.lower() or 'revenue' in col.lower()), None)
+        quantity_col = next((col for col in self.df.columns if 'quantity' in col.lower() or 'qty' in col.lower()), None)
+        
+        if not product_col or not sales_col:
+            print("Required columns not found")
+            return None
+        
+        # Aggregate by product
+        product_sales = self.df.groupby(product_col).agg(
+            {
+                sales_col: 'sum',
+                quantity_col: 'sum' if quantity_col else 'count'
+            }
+        ).reset_index()
+        
+        # Sort and get top products
+        product_sales = product_sales.sort_values(by=sales_col, ascending=False).head(top_n)
+        product_sales.columns = ['Product', 'Total_Sales', 'Total_Quantity']
+        
+        print(product_sales.to_string(index=False))
+        
+        # Save to CSV
+        product_sales.to_csv('top_products_csv', index=False)
+        print(f"\nResults saved to 'top_products_csv'")
+        
+        return product_sales
+    
+          
                 
