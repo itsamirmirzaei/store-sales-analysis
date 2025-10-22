@@ -34,7 +34,7 @@ class SalesAnalyzer:
         print(self.df.describe())
         
     def clean_data(self):
-        """Clean the dataset by handeling missing values, duplicates, and invalid data"""
+        """Clean the dataset by handling missing values, duplicates, and invalid data"""
         print("\n" * "=" * 50)
         print("Data cleaning")
         print("=" * 50)
@@ -45,9 +45,9 @@ class SalesAnalyzer:
         print(missing_values[missing_values > 0])
         
         # Remove duplicates
-        duplicates_befor = self.df.duplicated().sum()
+        duplicates_before = self.df.duplicated().sum()
         self.df = self.df.drop_duplicates()
-        print(f"\nDuplicates removed: {duplicates_befor}")
+        print(f"\nDuplicates removed: {duplicates_before}")
         
         # Handle missing values - fill numeric with median, categorical with mode
         for col in self.df.columns:
@@ -66,4 +66,44 @@ class SalesAnalyzer:
             rows_after_cleaning = len(self.df)
             print(f"\nrows after cleaning: {rows_after_cleaning}")
             print(f"\nRows removed: {self.original_rows - rows_after_cleaning}")
+    
+    def add_drived_columns(self):
+        """Add new columns with calculated metrics
+        Assumes columns exist: Sales, Cost, Profit (or similar)
+        """
+        print("\n" * "=" * 50)
+        print("Creating derived columns")
+        print("=" * 50)
+        
+        # Try to find relevant columns (flexible column naming)
+        sales_col = next((col for col in self.df.columns if 'sales' in col.lower() or 'revenue' in col.lower()), None)
+        cost_col = next((col for col in self.df.columns if 'cost' in col.lower()), None)
+        profit_col = next((col for col in self.df.columns if 'profit' in col.lower()), None)
+        quantity_col = next((col for col in self.df.columns if 'quantity' in col.lower() or 'qty' in col.lower()), None)
+        
+        if sales_col and cost_col and not profit_col:
+            # Calculate profit if not exists
+            self.df['Profit'] = self.df[sales_col] - self.df[cost_col]
+            profit_col = 'Profit'
+            print("Profit column created")
             
+        if sales_col and profit_col:
+            # Calculate average price per unit
+            self.df['Average_Unit_Price'] = (self.df[sales_col] / self.df[quantity_col]).round(2)
+            print("Average Unit Price column created")
+            
+        # Try to parse date column and extract month/year
+        date_col = next((col for col in self.df.columns if 'date' in col.lower()), None)
+        if date_col:
+            try:
+                self.df[date_col] = pd.to_datetime(self.df[date_col])
+                self.df['Year'] = self.df[date_col].dt.year
+                self.df['Month'] = self.df[date_col].dt.month
+                self.df['Month_Name'] = self.df[date_col].dt.month_name()
+                self.df['Quarter'] = self.df[date_col].dt.quarter
+                print("Date-based columns created (Year, Month, Month_name, Quarter)")
+            except:
+                print("Could not parse date column")
+        
+        print(f"\nNew columns added. Total column now: {len(self.df.columns)}")
+                
