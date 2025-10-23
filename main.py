@@ -345,4 +345,61 @@ class SalesAnalyzer:
         
         return regional_monthly, region_summary, month_summary
     
+    def general_final_report(self):
+        """
+        Generate a comprehensive final report with all key metrics
+        """
+        print("\n" + "=" * 50)
+        print("Final Comprehensive Report")
+        print("=" * 50)
+        
+        sales_col = next((col for col in self.df.columns if 'sales' in col.lower() or 'revenue' in col.lower()), None)
+        profit_col = 'Profit' if 'profit' in self.df.columns else None
+        
+        report = {
+            'Metric': [],
+            'Value': []
+        }
+        
+        # Overall statistics
+        report['Metric'].append('Total Transactions')
+        report['Value'].append(len(self.df))
+        
+        if sales_col:
+            report['Metric'].append('Total Sales Revenue')
+            report['Value'].append(f"${self.df[sales_col].sum():,.2f}")
+            
+            report['Metric'].append('Average Transaction Value')
+            report['Value'].append(f"${self.df[sales_col].mean():,.2f}")
+            
+            report['Metric'].append('Highest Single Transaction')
+            report['Value'].append(f"${self.df[sales_col].max():,.2f}")
+            
+            report['Metric'].append('Lowest Single Transaction')
+            report['Value'].append(f"${self.df[sales_col].min():,.2f}")
+            
+        if profit_col:
+            report['Metric'].append('Total Profit')
+            report['Value'].append(f"${self.df[profit_col].sum():,.2f}")
+            
+            report['Metric'].append('Average Profit per Transaction')
+            report['Value'].append(f"${self.df[profit_col].mean():,.2f}")
+            
+            if 'Profit_Margin_Percentage' in self.df.columns:
+                report['Metric'].append('Average Profit Margin')
+                report['Value'].append(f"{self.df['Profit_Margin_Percentage'].mean():.2f}%")
+                
+        report_df = pd.DataFrame(report)
+        print(report_df.to_string(index=False))
+        
+        # Save the cleaned and enriched dataset
+        self.df.to_csv('final_sales_data.csv', index=False)
+        print(f"\nFinal cleaned and enriched dataset saved to 'final_sales_data.csv'")
+        
+        # Save th report
+        report_df.to_csv('final_report.csv', index=False)
+        print(f"Final report saved to 'final_report.csv'")
+        
+        return report_df
+    
     
