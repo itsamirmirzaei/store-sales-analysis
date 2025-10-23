@@ -269,4 +269,80 @@ class SalesAnalyzer:
         
         return category_sales
         
+    def analyze_be_region_and_month(self):
+        """
+        Analyze highest and lowest sales by region and month 
+        """
+        print("\n" + "=" * 50)
+        print("Sales Analysis By Region And Month")
+        print("=" * 50)
+        
+        # Find region and sales columns
+        region_col = next((col for col in self.df.columns if 'region' in col.lower() or 'state' in col.lower() or 'city' in col.lower()), None)
+        sales_col = next((col for col in self.df.columns if 'sales' in col.lower() or 'revenue' in col.lower()), None)
+        
+        if not region_col or not sales_col:
+            print("Required columns not found")
+            return None
+        
+        # Aggregate by region and month
+        regional_monthly = self.df.groupby([region_col, 'Month_Name', 'Month']).agg(
+            {
+                sales_col: 'sum',
+            }
+        ).reset_index()
+        
+        regional_monthly.columns = ['Region', 'Month_Name', 'Month', 'Total_Sales']
+        regional_monthly = regional_monthly.sort_values(by=['Region', 'Month'])
+        
+        print("\nRegional Monthly Sales: ")
+        print(regional_monthly.to_string(index=False))
+        
+        # Find highest and lowest by region
+        print("\n" + "=" * 50)
+        print("Highest And Lowest By Region")
+        print("=" * 50)
+        
+        region_summary = self.df.groupby(region_col).agg(
+            {
+                sales_col: ['sum', 'max', 'min', 'mean']
+            }
+        ).reset_index()
+        
+        region_summary.columns = ['Region', 'Total_Sales', 'Highest_Sale', 'Lowest_Sale', 'Average_Sale']
+        region_summary = region_summary.sort_values(by='Total_Sales', ascending=False)
+        
+        for col in region_summary.select_dtypes(include=[np.number]).columns:
+            region_summary[col] = region_summary[col].round(2)
+            
+        print(region_summary.to_string(index=False))
+        
+        # Find highest and lowest by month
+        print("\n" + "=" * 50)
+        print("Highest And Lowest By Month")
+        print("=" * 50)
+        
+        month_summary = self.df.groupby(['Month', 'Month_Name']).agg(
+            {
+                sales_col: ['sum', 'max', 'min', 'mean']
+            }
+        ).reset_index()
+        
+        month_summary.columns = ['Month', 'Month_Name', 'Total_Sale','Highest_Sale', 'Lowest_Sale', 'Average_Sale']
+        month_summary = month_summary.sort_values(by='Month')
+        
+        for col in month_summary.select_dtypes(include=[np.number]).columns:
+            if col != 'Month':
+                month_summary[col] = month_summary[col].round(2)
+                
+        print(month_summary.to_string(index=False))
+        
+        # Save To CSV
+        regional_monthly.to_csv('regional_monthly_sales.csv', index=False)
+        region_summary.to_csv('region_summary.csv', index=False)
+        month_summary.to_csv('  month_summary.csv', index=False)
+        print(f"\nResults saved to CSV files")
+        
+        return regional_monthly, region_summary, month_summary
+    
     
