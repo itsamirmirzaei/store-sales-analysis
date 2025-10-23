@@ -221,4 +221,52 @@ class SalesAnalyzer:
         
         return monthly_profit
     
+    def analyze_by_category(self):
+        """
+        Analyze total sales by product  category
+        """
+        print("\n" + "=" * 50)
+        print("Sales Analysis By Category")
+        print("=" * 50)
+        
+        # Find category and sales columns
+        category_col = next((col for col in self.df.columns if 'category' in col.lower() or 'type' in col.lower()), None)
+        sales_col = next((col for col in self.df.columns if 'sales' in col.lower() or 'revenue' in col.lower()), None)
+        profit_col = 'Profit' if 'profit' in self.df.columns else None
+        
+        if not category_col or not sales_col:
+            print("Required columns not found")
+            return None
+        
+        # Aggregate by category
+        agg_dict = {sales_col: ['sum', 'mean', 'count']}
+        if profit_col:
+            agg_dict[profit_col] = 'sum'
+            
+        category_sales = self.df.groupby(category_col).agg(agg_dict).reset_index()
+        
+        # Flatten column names
+        if profit_col:
+            category_sales.columns = ['Category', 'Total_Sales', 'Average_Sales', 'Transaction_Count', 'Total_Profit']
+        else:
+            category_sales.columns = ['Category', 'Total_Sales', 'Average_Sales', 'Transaction_Count']
+            
+        category_sales = category_sales.sort_values(by='Total_Sales', ascending=False)
+        
+        # Calculate percentage of total sales
+        category_sales['Sales_Percentage'] = (category_sales['Total_Sales'] / category_sales['Total_Sales'].sum() * 100).round(2)
+        
+        # Round numeric columns
+        for col in category_sales.select_dtypes(include=[np.number]).columns:
+            if col != 'Transaction_Count':
+                category_sales[col] = category_sales[col],round(2)
+                
+        print(category_sales.to_string(index=False))
+        
+        # Save to CSV
+        category_sales.to_csv('category_analysis.csv', index=False)
+        print(f"\nResults saved to 'category_analysis.csv'")
+        
+        return category_sales
+        
     
