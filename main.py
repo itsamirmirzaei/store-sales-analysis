@@ -147,5 +147,43 @@ class SalesAnalyzer:
         
         return product_sales
     
-          
-                
+    def analyze_loyal_customer(self, top_n=10):
+        """
+        Identify loyal customers based on purchase frequency and total spending
+        
+        Args:
+            top_n (int): Number of customers to display
+        """
+        print("\n" + "=" * 50)
+        print(f"Top {top_n} Loyal Customers")
+        print("=" * 50)
+        
+        # Find customer and sales columns
+        customer_col = next((col for col in self.df.columns if 'customer' in col.lower() or 'client' in col.lower()), None)
+        sales_col = next((col for col in self.df.columns if 'sales' in col.lower() or 'revenue' in col.lower()), None)
+        
+        if not customer_col or not sales_col:
+            print("Required columns not found")
+            return None
+        
+        # Aggregate by customer
+        customer_analysis = self.df.groupby(customer_col).agg(
+            {
+                sales_col: ['sum', 'count', 'mean']
+            }
+        ).reset_index()
+        
+        customer_analysis.columns = ['Customer', 'Total_Spending', 'Purchase_Count', 'Average_Purchase']
+        customer_analysis = customer_analysis.sort_values(by='Total_Spending', ascending=False).head(top_n)
+        customer_analysis['Total_Spending'] = customer_analysis['Total_Spending'].round(2)
+        customer_analysis['Average_Purchase'] = customer_analysis['Average_Purchase'].round(2)
+        
+        print(customer_analysis.to_string(index=False))
+        
+        # Save to CSV
+        customer_analysis.to_csv('loyal_customers.csv', index=False)
+        print(f"Results saved to 'loyal_customers.csv'")
+        
+        return customer_analysis
+    
+    
