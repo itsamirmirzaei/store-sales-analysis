@@ -186,4 +186,39 @@ class SalesAnalyzer:
         
         return customer_analysis
     
+    def analyze_profitability_trend(self):
+        """
+        Analyze profitability trends over time
+        """
+        print("\n" + "=" * 50)
+        print("Profitability Trend Analysis")
+        print("=" * 50)
+        
+        # Check if we have the required columns
+        if 'Month_Name' not in self.df.columns or 'Profit' not in self.df.columns:
+            print("Required columns not found. Make sure to run add_derived_columns() first")
+            return None
+        
+        # Aggregate by month
+        monthly_profit = self.df.groupby(['Year', 'Month', 'Month_Name']).agg(
+            {
+                'Profit': ['sum', 'mean'],
+                'Profit_Margin_Percentage': 'mean'
+            }
+        ).reset_index()
+        
+        monthly_profit.columns = ['Year', 'Month', 'Month_Name', 'Total_Profit', 'Average_Profit', 'Avg_Profit_Margin']
+        monthly_profit = monthly_profit.sort_values(by=['Year', 'Month'])
+        monthly_profit['Total_Profit'] = monthly_profit['Total_Profit'].round(2)
+        monthly_profit['Average_Profit'] = monthly_profit['Average_Profit'].round(2)
+        monthly_profit['Avg_Profit_Margin'] = monthly_profit['Avg_Profit_Margin'].round(2)
+        
+        print(monthly_profit.to_string(index=False))
+        
+        # Save to CSV
+        monthly_profit.to_csv('profitability_trend.csv', index=False)
+        print(f"\nResults saved to 'profitability_trend.csv'")
+        
+        return monthly_profit
+    
     
